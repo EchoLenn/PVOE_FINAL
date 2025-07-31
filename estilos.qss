@@ -5,15 +5,15 @@
 
 /* --- Ventana Principal y Elementos Globales --- */
 QMainWindow, QWidget {
-    background-color: #ffffff; /* Fondo blanco limpio */
+    background-color: #ffffff;
     font-family: Arial, sans-serif;
-    color: #222222; /* <<-- LÍNEA AÑADIDA: Color de texto negro por defecto para toda la app */
+    color: #222222;
 }
 
-/* --- Barras de Menú y Herramientas --- */
+/* --- Barras de Menu y Herramientas --- */
 QMenuBar {
-    background-color: #222222; 
-    color: #ffffff; /* Este blanco ahora solo aplica a la barra de menú */
+    background-color: #222222;
+    color: #ffffff;
     border-bottom: 2px solid #c90023;
 }
 QMenuBar::item:selected {
@@ -37,8 +37,8 @@ QToolBar {
 
 /* --- Botones --- */
 QPushButton {
-    background-color: #c90023; 
-    color: white; /* El color blanco se mantiene para los botones */
+    background-color: #c90023;
+    color: white;
     font-weight: bold;
     border: none;
     padding: 8px 18px;
@@ -47,11 +47,11 @@ QPushButton {
 }
 
 QPushButton:hover {
-    background-color: #a1001c; 
+    background-color: #a1001c;
 }
 
 QPushButton:pressed {
-    background-color: #8c0018; 
+    background-color: #8c0018;
 }
 
 QPushButton:disabled {
@@ -69,20 +69,19 @@ QLineEdit {
 }
 
 QLineEdit:focus {
-    border: 2px solid #c90023; 
+    border: 2px solid #c90023;
 }
 
-/* --- Etiquetas y Títulos --- */
+/* --- Etiquetas y Titulos --- */
 QLabel {
     font-size: 13px;
-    /* Ya no es necesario definir el color aquí, heredará el negro por defecto */
 }
 
 /* --- Contenedores de Formularios --- */
 QGroupBox {
     font-size: 14px;
     font-weight: bold;
-    color: #c90023; /* El color rojo para los títulos de grupo se mantiene */
+    color: #c90023;
     border: 1px solid #dddddd;
     border-radius: 5px;
     margin-top: 12px;
@@ -92,7 +91,7 @@ QGroupBox::title {
     subcontrol-origin: margin;
     subcontrol-position: top center;
     padding: 0 10px;
-    background-color: #ffffff; 
+    background-color: #ffffff;
 }
 
 /* --- Tablas (Kardex, Calificaciones) --- */
