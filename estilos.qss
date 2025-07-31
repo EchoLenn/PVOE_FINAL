@@ -1,0 +1,118 @@
+/*
+ * Hoja de Estilos QSS para el Proyecto UAMITOS HIGH SCHOOL
+ * Inspirada en la paleta de colores institucionales: Rojo, Negro y Blanco.
+*/
+
+/* --- Ventana Principal y Elementos Globales --- */
+QMainWindow, QWidget {
+    background-color: #ffffff; /* Fondo blanco limpio */
+    font-family: Arial, sans-serif;
+    color: #222222; /* <<-- LÍNEA AÑADIDA: Color de texto negro por defecto para toda la app */
+}
+
+/* --- Barras de Menú y Herramientas --- */
+QMenuBar {
+    background-color: #222222; 
+    color: #ffffff; /* Este blanco ahora solo aplica a la barra de menú */
+    border-bottom: 2px solid #c90023;
+}
+QMenuBar::item:selected {
+    background-color: #c90023;
+}
+
+QMenu {
+    background-color: #333333;
+    color: #ffffff;
+    border: 1px solid #555555;
+}
+QMenu::item:selected {
+    background-color: #c90023;
+}
+
+QToolBar {
+    background-color: #f0f0f0;
+    border-bottom: 1px solid #cccccc;
+    padding: 2px;
+}
+
+/* --- Botones --- */
+QPushButton {
+    background-color: #c90023; 
+    color: white; /* El color blanco se mantiene para los botones */
+    font-weight: bold;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+QPushButton:hover {
+    background-color: #a1001c; 
+}
+
+QPushButton:pressed {
+    background-color: #8c0018; 
+}
+
+QPushButton:disabled {
+    background-color: #a9a9a9;
+    color: #e0e0e0;
+}
+
+/* --- Campos de Entrada de Texto --- */
+QLineEdit {
+    border: 1px solid #cccccc;
+    padding: 6px;
+    border-radius: 4px;
+    background-color: #fdfdfd;
+    font-size: 13px;
+}
+
+QLineEdit:focus {
+    border: 2px solid #c90023; 
+}
+
+/* --- Etiquetas y Títulos --- */
+QLabel {
+    font-size: 13px;
+    /* Ya no es necesario definir el color aquí, heredará el negro por defecto */
+}
+
+/* --- Contenedores de Formularios --- */
+QGroupBox {
+    font-size: 14px;
+    font-weight: bold;
+    color: #c90023; /* El color rojo para los títulos de grupo se mantiene */
+    border: 1px solid #dddddd;
+    border-radius: 5px;
+    margin-top: 12px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top center;
+    padding: 0 10px;
+    background-color: #ffffff; 
+}
+
+/* --- Tablas (Kardex, Calificaciones) --- */
+QTableWidget {
+    border: 1px solid #cccccc;
+    gridline-color: #e0e0e0;
+    font-size: 12px;
+}
+
+QHeaderView::section {
+    background-color: #222222;
+    color: white;
+    padding: 6px;
+    border: 1px solid #444444;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+/* --- Barra de Estado --- */
+QStatusBar {
+    background-color: #f0f0f0;
+    font-weight: bold;
+}
