@@ -115,3 +115,26 @@ QStatusBar {
     background-color: #f0f0f0;
     font-weight: bold;
 }
+
+/* --- Estilos para CheckBox (Género) --- */
+QCheckBox {
+    spacing: 5px;
+    font-size: 13px;
+}
+
+QCheckBox::indicator {
+    width: 15px;
+    height: 15px;
+    border: 2px solid #cccccc;
+    border-radius: 3px;
+}
+
+QCheckBox::indicator:unchecked {
+    background-color: #ffffff;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #c90023;
+    border-color: #c90023;
+    image: url(iconos/check.svg);
+}
