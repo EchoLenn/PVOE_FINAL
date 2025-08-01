@@ -1,9 +1,6 @@
 import os
-from PySide6.QtWidgets import (
-    QWidget, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
-    QVBoxLayout, QHBoxLayout, QLabel, QMessageBox, QHeaderView
-)
-from PySide6.QtCore import Slot, Qt
+from PySide6.QtWidgets import *
+from PySide6.QtCore import *
 
 class VistaCalificaciones(QWidget):
     def __init__(self):
