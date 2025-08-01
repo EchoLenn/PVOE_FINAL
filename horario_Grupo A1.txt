@@ -1,5 +1,0 @@
-0,0,Programación Visual
-1,1,Español
-2,2,Ciencias
-3,3,Español
-3,4,Español
