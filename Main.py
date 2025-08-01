@@ -4,6 +4,7 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
+import database_manager
 from vista_inicio import VistaInicio
 from vista_login import VistaLogin
 from vista_registro_alumno import VistaRegistroAlumno
@@ -13,7 +14,6 @@ from vista_inscripcion import VistaInscripcion
 from vista_historial_inscripciones import VistaHistorialInscripciones
 from vista_grupos import VistaGrupos
 from vista_horario import VistaHorario
-from vista_definir_horario import VistaDefinirHorario
 
 try:
     with open("estilos.qss", "x") as f:
@@ -43,7 +43,6 @@ class VentanaPrincipal(QMainWindow):
         self.accion_historial_inscripciones = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserReload), "Consultar Historial", self)
         self.accion_generar_grupo = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder), "Generar Grupo", self)
         self.accion_consultar_horario = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogListView), "Consultar Horario", self)
-        self.accion_definir_horario = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView), "Definir Horario", self)
         accion_acerca_de = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_MessageBoxInformation), "Acerca de...", self)
 
         self.menu_archivo.addAction(self.accion_ir_inicio)
@@ -57,9 +56,6 @@ class VentanaPrincipal(QMainWindow):
         self.menu_admin.addAction(self.accion_generar_grupo)
         self.menu_admin.addAction(self.accion_consultar_horario)
         self.menu_ayuda.addAction(accion_acerca_de)
-        self.menu_admin.addAction(self.accion_generar_grupo)
-        self.menu_admin.addAction(self.accion_definir_horario)
-        self.menu_admin.addAction(self.accion_consultar_horario)
 
         self.toolbar = self.addToolBar("Barra de Herramientas Principal")
         self.toolbar.setIconSize(QSize(24, 24))
@@ -73,9 +69,6 @@ class VentanaPrincipal(QMainWindow):
         self.toolbar.addAction(self.accion_consultar_horario)
         self.toolbar.addSeparator()
         self.toolbar.addAction(accion_salir)
-        self.toolbar.addAction(self.accion_generar_grupo)
-        self.toolbar.addAction(self.accion_definir_horario)
-        self.toolbar.addAction(self.accion_consultar_horario)
 
         self.vistas = QStackedWidget()
         self.setCentralWidget(self.vistas)
@@ -89,7 +82,6 @@ class VentanaPrincipal(QMainWindow):
         self.vista_historial_ins = VistaHistorialInscripciones()
         self.vista_grupos = VistaGrupos()
         self.vista_horario = VistaHorario()
-        self.vista_definir_horario = VistaDefinirHorario()
 
         self.vistas.addWidget(self.vista_login)
         self.vistas.addWidget(self.vista_inicio)
@@ -100,7 +92,6 @@ class VentanaPrincipal(QMainWindow):
         self.vistas.addWidget(self.vista_historial_ins)
         self.vistas.addWidget(self.vista_grupos)
         self.vistas.addWidget(self.vista_horario)
-        self.vistas.addWidget(self.vista_definir_horario)
 
         self.statusBar().showMessage("Por favor, inicie sesión para continuar.")
 
@@ -114,7 +105,6 @@ class VentanaPrincipal(QMainWindow):
         self.accion_historial_inscripciones.triggered.connect(self.mostrar_vista_historial)
         self.accion_generar_grupo.triggered.connect(self.mostrar_vista_grupos)
         self.accion_consultar_horario.triggered.connect(self.mostrar_vista_horario)
-        self.accion_definir_horario.triggered.connect(self.mostrar_vista_definir_horario)
         
         self.vista_login.login_exitoso.connect(self.desbloquear_aplicacion)
         
@@ -173,13 +163,10 @@ class VentanaPrincipal(QMainWindow):
             "<p><b>Equipo de Desarrollo:</b><br>"
             "Echo Lengrit Muñoz Sanchez</p>"
         )
-    @Slot()
-    def mostrar_vista_definir_horario(self):
-        """Muestra la vista para definir/editar horarios."""
-        self.vistas.setCurrentWidget(self.vista_definir_horario)
-        self.vista_definir_horario.refrescar_grupos()
 
 if __name__ == "__main__":
+    database_manager.init_db()
+    
     app = QApplication(sys.argv)
     
     try:
