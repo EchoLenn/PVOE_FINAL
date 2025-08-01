@@ -3,12 +3,17 @@ import os
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
-
 from vista_login import VistaLogin
 from vista_registro_alumno import VistaRegistroAlumno
 from vista_calificaciones import VistaCalificaciones
 from vista_kardex import VistaKardex
 from vista_inscripcion import VistaInscripcion
+
+try:
+    with open("estilos.qss", "x") as f:
+        f.write("/* Archivo de Estilos QSS para UAMITOS High School */")
+except FileExistsError:
+    pass
 
 class VentanaPrincipal(QMainWindow):
     def __init__(self):
@@ -22,13 +27,13 @@ class VentanaPrincipal(QMainWindow):
         self.menu_inscripciones = menu.addMenu("&Inscripciones")
         self.menu_ayuda = menu.addMenu("A&yuda")
 
-        self.accion_ir_inicio = QAction(QIcon("iconos/home.png"), "Ir a Inicio", self)
-        accion_salir = QAction(QIcon("iconos/log-out.png"), "Salir", self)
-        self.accion_registrar_alumno = QAction(QIcon("iconos/user-plus.png"), "Registrar Nuevo Alumno", self)
-        self.accion_gestionar_calificaciones = QAction(QIcon("iconos/edit.png"), "Gestionar Calificaciones", self)
-        self.accion_consultar_kardex = QAction(QIcon("iconos/file-text.png"), "Consultar Kardex", self)
-        self.accion_solicitar_inscripcion = QAction(QIcon("iconos/clipboard.svg"), "Solicitar Inscripción", self)
-        accion_acerca_de = QAction("Acerca de...", self)
+        self.accion_ir_inicio = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_ComputerIcon), "Ir a Inicio", self)
+        accion_salir = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogCloseButton), "Salir", self)
+        self.accion_registrar_alumno = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon), "Registrar Nuevo Alumno", self)
+        self.accion_gestionar_calificaciones = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView), "Gestionar Calificaciones", self)
+        self.accion_consultar_kardex = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogContentsView), "Consultar Kardex", self)
+        self.accion_solicitar_inscripcion = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton), "Solicitar Inscripción", self)
+        accion_acerca_de = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_MessageBoxInformation), "Acerca de...", self)
 
         self.menu_archivo.addAction(self.accion_ir_inicio)
         self.menu_archivo.addSeparator() 
@@ -127,7 +132,6 @@ class VentanaPrincipal(QMainWindow):
             "Echo Lengrit Muñoz Sanchez</p>"
         )
 
-
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     
@@ -136,7 +140,7 @@ if __name__ == "__main__":
         qss_file = os.path.join(script_dir, "estilos.qss")
 
         if os.path.exists(qss_file):
-            with open(qss_file, "r") as f:
+            with open(qss_file, "r", encoding="utf-8") as f:
                 stylesheet = f.read()
                 app.setStyleSheet(stylesheet)
                 print("Estilos QSS cargados correctamente.")
