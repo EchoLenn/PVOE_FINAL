@@ -1,16 +1,14 @@
 import sys
 import os
-from PySide6.QtCore import Slot, QSize
-from PySide6.QtGui import QAction, QIcon
-from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, 
-    QLabel, QMessageBox, QStackedWidget
-)
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 from vista_login import VistaLogin
 from vista_registro_alumno import VistaRegistroAlumno
 from vista_calificaciones import VistaCalificaciones
 from vista_kardex import VistaKardex
+from vista_inscripcion import VistaInscripcion
 
 class VentanaPrincipal(QMainWindow):
     def __init__(self):
@@ -21,6 +19,7 @@ class VentanaPrincipal(QMainWindow):
         menu = self.menuBar()
         self.menu_archivo = menu.addMenu("&Archivo")
         self.menu_alumnos = menu.addMenu("&Alumnos")
+        self.menu_inscripciones = menu.addMenu("&Inscripciones")
         self.menu_ayuda = menu.addMenu("A&yuda")
 
         self.accion_ir_inicio = QAction(QIcon("iconos/home.png"), "Ir a Inicio", self)
@@ -28,6 +27,7 @@ class VentanaPrincipal(QMainWindow):
         self.accion_registrar_alumno = QAction(QIcon("iconos/user-plus.png"), "Registrar Nuevo Alumno", self)
         self.accion_gestionar_calificaciones = QAction(QIcon("iconos/edit.png"), "Gestionar Calificaciones", self)
         self.accion_consultar_kardex = QAction(QIcon("iconos/file-text.png"), "Consultar Kardex", self)
+        self.accion_solicitar_inscripcion = QAction(QIcon("iconos/clipboard.svg"), "Solicitar Inscripción", self)
         accion_acerca_de = QAction("Acerca de...", self)
 
         self.menu_archivo.addAction(self.accion_ir_inicio)
@@ -36,6 +36,7 @@ class VentanaPrincipal(QMainWindow):
         self.menu_alumnos.addAction(self.accion_registrar_alumno)
         self.menu_alumnos.addAction(self.accion_gestionar_calificaciones)
         self.menu_alumnos.addAction(self.accion_consultar_kardex)
+        self.menu_inscripciones.addAction(self.accion_solicitar_inscripcion)
         self.menu_ayuda.addAction(accion_acerca_de)
 
         self.toolbar = self.addToolBar("Barra de Herramientas Principal")
@@ -44,6 +45,8 @@ class VentanaPrincipal(QMainWindow):
         self.toolbar.addAction(self.accion_registrar_alumno)
         self.toolbar.addAction(self.accion_gestionar_calificaciones)
         self.toolbar.addAction(self.accion_consultar_kardex)
+        self.toolbar.addAction(self.accion_solicitar_inscripcion)
+        self.toolbar.addSeparator()
         self.toolbar.addAction(accion_salir)
 
         self.vistas = QStackedWidget()
@@ -56,12 +59,14 @@ class VentanaPrincipal(QMainWindow):
         self.vista_registro = VistaRegistroAlumno()
         self.vista_calificaciones = VistaCalificaciones()
         self.vista_kardex = VistaKardex()
+        self.vista_inscripcion = VistaInscripcion()
 
         self.vistas.addWidget(self.vista_login)
         self.vistas.addWidget(self.vista_inicio)
         self.vistas.addWidget(self.vista_registro)
         self.vistas.addWidget(self.vista_calificaciones)
         self.vistas.addWidget(self.vista_kardex)
+        self.vistas.addWidget(self.vista_inscripcion)
 
         self.statusBar().showMessage("Por favor, inicie sesión para continuar.")
 
@@ -71,17 +76,20 @@ class VentanaPrincipal(QMainWindow):
         self.accion_registrar_alumno.triggered.connect(self.mostrar_vista_registro)
         self.accion_gestionar_calificaciones.triggered.connect(self.mostrar_vista_calificaciones)
         self.accion_consultar_kardex.triggered.connect(self.mostrar_vista_kardex)
+        self.accion_solicitar_inscripcion.triggered.connect(self.mostrar_vista_inscripcion)
         
         self.vista_login.login_exitoso.connect(self.desbloquear_aplicacion)
         
         self.vistas.setCurrentWidget(self.vista_login)
         self.menu_alumnos.setEnabled(False)
+        self.menu_inscripciones.setEnabled(False)
         self.toolbar.setVisible(False)
         self.accion_ir_inicio.setEnabled(False)
 
     @Slot()
     def desbloquear_aplicacion(self):
         self.menu_alumnos.setEnabled(True)
+        self.menu_inscripciones.setEnabled(True)
         self.toolbar.setVisible(True)
         self.accion_ir_inicio.setEnabled(True)
         self.statusBar().showMessage("Sesión iniciada correctamente.")
@@ -104,6 +112,10 @@ class VentanaPrincipal(QMainWindow):
         self.vistas.setCurrentWidget(self.vista_kardex)
 
     @Slot()
+    def mostrar_vista_inscripcion(self):
+        self.vistas.setCurrentWidget(self.vista_inscripcion)
+
+    @Slot()
     def mostrar_acerca_de(self):
         QMessageBox.about(
             self,
@@ -112,7 +124,7 @@ class VentanaPrincipal(QMainWindow):
             "<p>Desarrollado para el proyecto final de Programación Visual Orientada a Eventos.</p>"
             "<p><b>Cliente:</b> Secundaria UAMITOS</p>"
             "<p><b>Equipo de Desarrollo:</b><br>"
-            "[Aquí irían los nombres de los integrantes]</p>"
+            "Echo Lengrit Muñoz Sanchez</p>"
         )
 
 

@@ -1,6 +1,9 @@
 import os
-from PySide6.QtWidgets import *
-from PySide6.QtCore import *
+from PySide6.QtWidgets import (
+    QWidget, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
+    QVBoxLayout, QHBoxLayout, QLabel, QMessageBox, QHeaderView
+)
+from PySide6.QtCore import Slot, Qt
 
 class VistaCalificaciones(QWidget):
     def __init__(self):
@@ -36,6 +39,16 @@ class VistaCalificaciones(QWidget):
         self.entry_id.returnPressed.connect(self.buscar_alumno)
         self.boton_guardar.clicked.connect(self.guardar_calificaciones)
 
+    def _cargar_materias_defecto(self):
+        materias = ["Matemáticas", "Ciencias", "Historia", "Español", "Programación Visual"]
+        self.tabla_calificaciones.setRowCount(len(materias))
+        for fila, materia in enumerate(materias):
+            item_materia = QTableWidgetItem(materia)
+            item_materia.setFlags(item_materia.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            item_calificacion = QTableWidgetItem("")
+            self.tabla_calificaciones.setItem(fila, 0, item_materia)
+            self.tabla_calificaciones.setItem(fila, 1, item_calificacion)
+
     @Slot()
     def buscar_alumno(self):
         student_id = self.entry_id.text().strip()
@@ -46,11 +59,19 @@ class VistaCalificaciones(QWidget):
         self.filename = f"{student_id}.txt"
         self.current_student_id = student_id
 
-        if os.path.exists(self.filename):
-            try:
-                with open(self.filename, 'r') as f:
-                    lineas = [line.strip() for line in f.readlines()]
-                
+        if not os.path.exists(self.filename):
+            QMessageBox.critical(self, "Alumno No Encontrado", f"No se encontró un registro para el alumno con ID: {student_id}.\nVerifique el ID o registre al alumno primero.")
+            self.tabla_calificaciones.setRowCount(0)
+            self.boton_guardar.setEnabled(False)
+            return
+        
+        try:
+            with open(self.filename, 'r') as f:
+                lineas = [line.strip() for line in f.readlines() if line.strip()]
+
+            if not lineas:
+                self._cargar_materias_defecto()
+            else:
                 self.tabla_calificaciones.setRowCount(len(lineas))
                 for fila, linea in enumerate(lineas):
                     if ',' in linea:
@@ -63,21 +84,13 @@ class VistaCalificaciones(QWidget):
                     item_calificacion = QTableWidgetItem(calificacion)
                     self.tabla_calificaciones.setItem(fila, 0, item_materia)
                     self.tabla_calificaciones.setItem(fila, 1, item_calificacion)
-            except Exception as e:
-                QMessageBox.critical(self, "Error al Cargar", f"No se pudo leer el archivo de calificaciones:\n{e}")
-                return
-        else:
-            materias = ["Matemáticas", "Ciencias", "Historia", "Español", "Programación Visual"]
-            self.tabla_calificaciones.setRowCount(len(materias))
-            for fila, materia in enumerate(materias):
-                item_materia = QTableWidgetItem(materia)
-                item_materia.setFlags(item_materia.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                item_calificacion = QTableWidgetItem("")
-                self.tabla_calificaciones.setItem(fila, 0, item_materia)
-                self.tabla_calificaciones.setItem(fila, 1, item_calificacion)
-        
-        self.boton_guardar.setEnabled(True)
+            
+            self.boton_guardar.setEnabled(True)
 
+        except Exception as e:
+            QMessageBox.critical(self, "Error al Cargar", f"No se pudo leer el archivo de calificaciones:\n{e}")
+            self.boton_guardar.setEnabled(False)
+    
     @Slot()
     def guardar_calificaciones(self):
         try:
