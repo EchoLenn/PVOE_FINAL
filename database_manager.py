@@ -1,4 +1,5 @@
 import sqlite3
+import hashlib
 
 DB_NAME = "escuela.db"
 
@@ -8,14 +9,47 @@ def init_db():
     cursor.execute("PRAGMA foreign_keys = ON;")
     cursor.execute("CREATE TABLE IF NOT EXISTS alumnos (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL, apellido_paterno TEXT NOT NULL, apellido_materno TEXT, direccion TEXT, fecha_nacimiento TEXT, genero TEXT)")
     cursor.execute("CREATE TABLE IF NOT EXISTS tutores (id INTEGER PRIMARY KEY, id_alumno INTEGER NOT NULL UNIQUE, nombre_completo TEXT, telefono TEXT, correo TEXT, FOREIGN KEY(id_alumno) REFERENCES alumnos(id) ON DELETE CASCADE)")
-    cursor.execute("CREATE TABLE IF NOT EXISTS calificaciones (id INTEGER PRIMARY KEY, id_alumno INTEGER NOT NULL, materia TEXT NOT NULL, calificacion REAL, FOREIGN KEY(id_alumno) REFERENCES alumnos(id) ON DELETE CASCADE)")
     cursor.execute("CREATE TABLE IF NOT EXISTS grupos (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL UNIQUE, profesor TEXT)")
     cursor.execute("CREATE TABLE IF NOT EXISTS materias (id INTEGER PRIMARY KEY, nombre TEXT NOT NULL UNIQUE)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS usuarios (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, rol TEXT NOT NULL)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS calificaciones (id INTEGER PRIMARY KEY, id_alumno INTEGER NOT NULL, materia TEXT NOT NULL, calificacion REAL, FOREIGN KEY(id_alumno) REFERENCES alumnos(id) ON DELETE CASCADE)")
     cursor.execute("CREATE TABLE IF NOT EXISTS grupo_materias (id_grupo INTEGER, id_materia INTEGER, PRIMARY KEY(id_grupo, id_materia), FOREIGN KEY(id_grupo) REFERENCES grupos(id) ON DELETE CASCADE, FOREIGN KEY(id_materia) REFERENCES materias(id) ON DELETE CASCADE)")
     cursor.execute("CREATE TABLE IF NOT EXISTS inscripciones (id INTEGER PRIMARY KEY, id_alumno INTEGER NOT NULL, id_grupo INTEGER NOT NULL, fecha TEXT, costo REAL, FOREIGN KEY(id_alumno) REFERENCES alumnos(id) ON DELETE CASCADE, FOREIGN KEY(id_grupo) REFERENCES grupos(id) ON DELETE CASCADE)")
     cursor.execute("CREATE TABLE IF NOT EXISTS horarios (id INTEGER PRIMARY KEY, id_grupo INTEGER NOT NULL, materia TEXT NOT NULL, dia TEXT NOT NULL, hora TEXT NOT NULL, UNIQUE(id_grupo, dia, hora), FOREIGN KEY(id_grupo) REFERENCES grupos(id) ON DELETE CASCADE)")
     conn.commit()
     conn.close()
+
+def crear_admin_por_defecto():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM usuarios WHERE rol = 'admin'")
+    if not cursor.fetchone():
+        password_hash = hashlib.sha256("1234".encode()).hexdigest()
+        cursor.execute("INSERT INTO usuarios (username, password_hash, rol) VALUES (?, ?, ?)", ("admin", password_hash, "admin"))
+        conn.commit()
+    conn.close()
+
+def verificar_usuario(username, password):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    cursor.execute("SELECT rol FROM usuarios WHERE username = ? AND password_hash = ?", (username, password_hash))
+    resultado = cursor.fetchone()
+    conn.close()
+    return resultado[0] if resultado else None
+
+def crear_usuario(username, password, rol):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    try:
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        cursor.execute("INSERT INTO usuarios (username, password_hash, rol) VALUES (?, ?, ?)", (username, password_hash, rol))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return "integridad"
+    finally:
+        conn.close()
 
 def registrar_alumno(datos_alumno, datos_tutor):
     conn = sqlite3.connect(DB_NAME)
@@ -48,7 +82,7 @@ def guardar_calificaciones(id_alumno, lista_calificaciones):
     cursor = conn.cursor()
     cursor.execute("DELETE FROM calificaciones WHERE id_alumno = ?", (id_alumno,))
     for materia, calificacion in lista_calificaciones:
-        try: calif_float = float(calificacion) if calificacion else None
+        try: calif_float = float(calificacion) if calificacion and calificacion.strip() else None
         except ValueError: calif_float = None
         cursor.execute("INSERT INTO calificaciones (id_alumno, materia, calificacion) VALUES (?, ?, ?)", (id_alumno, materia, calif_float))
     conn.commit()
@@ -133,17 +167,9 @@ def obtener_horario(id_grupo):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT dia, hora, materia
-        FROM horarios
-        WHERE id_grupo = ?
-        ORDER BY
-            CASE dia
-                WHEN 'Lunes' THEN 1
-                WHEN 'Martes' THEN 2
-                WHEN 'Miércoles' THEN 3
-                WHEN 'Jueves' THEN 4
-                WHEN 'Viernes' THEN 5
-            END, hora
+        SELECT dia, hora, materia FROM horarios WHERE id_grupo = ?
+        ORDER BY CASE dia WHEN 'Lunes' THEN 1 WHEN 'Martes' THEN 2 WHEN 'Miércoles' THEN 3
+        WHEN 'Jueves' THEN 4 WHEN 'Viernes' THEN 5 END, hora
     """, (id_grupo,))
     horario = cursor.fetchall()
     conn.close()

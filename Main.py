@@ -15,6 +15,13 @@ from vista_historial_inscripciones import VistaHistorialInscripciones
 from vista_grupos import VistaGrupos
 from vista_horario import VistaHorario
 from vista_consulta_grupos import VistaConsultaGrupos
+from vista_gestion_usuarios import VistaGestionUsuarios
+
+try:
+    with open("estilos.qss", "x") as f:
+        f.write("/* Archivo de Estilos QSS para UAMITOS High School */")
+except FileExistsError:
+    pass
 
 class VentanaPrincipal(QMainWindow):
     def __init__(self):
@@ -39,6 +46,7 @@ class VentanaPrincipal(QMainWindow):
         self.accion_generar_grupo = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder), "Generar Grupo", self)
         self.accion_consultar_alumnos_grupo = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DesktopIcon), "Consultar Alumnos por Grupo", self)
         self.accion_gestionar_horario = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogListView), "Gestionar Horario", self)
+        self.accion_gestionar_usuarios = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogContentsView), "Gestionar Usuarios", self)
         accion_acerca_de = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_MessageBoxInformation), "Acerca de...", self)
 
         self.menu_archivo.addAction(self.accion_ir_inicio)
@@ -52,6 +60,8 @@ class VentanaPrincipal(QMainWindow):
         self.menu_admin.addAction(self.accion_generar_grupo)
         self.menu_admin.addAction(self.accion_consultar_alumnos_grupo)
         self.menu_admin.addAction(self.accion_gestionar_horario)
+        self.menu_admin.addSeparator()
+        self.menu_admin.addAction(self.accion_gestionar_usuarios)
         self.menu_ayuda.addAction(accion_acerca_de)
 
         self.toolbar = self.addToolBar("Barra de Herramientas Principal")
@@ -65,6 +75,7 @@ class VentanaPrincipal(QMainWindow):
         self.toolbar.addAction(self.accion_generar_grupo)
         self.toolbar.addAction(self.accion_consultar_alumnos_grupo)
         self.toolbar.addAction(self.accion_gestionar_horario)
+        self.toolbar.addAction(self.accion_gestionar_usuarios)
         self.toolbar.addSeparator()
         self.toolbar.addAction(accion_salir)
 
@@ -81,6 +92,7 @@ class VentanaPrincipal(QMainWindow):
         self.vista_grupos = VistaGrupos()
         self.vista_horario = VistaHorario()
         self.vista_consulta_grupos = VistaConsultaGrupos()
+        self.vista_gestion_usuarios = VistaGestionUsuarios()
 
         self.vistas.addWidget(self.vista_login)
         self.vistas.addWidget(self.vista_inicio)
@@ -92,6 +104,7 @@ class VentanaPrincipal(QMainWindow):
         self.vistas.addWidget(self.vista_grupos)
         self.vistas.addWidget(self.vista_horario)
         self.vistas.addWidget(self.vista_consulta_grupos)
+        self.vistas.addWidget(self.vista_gestion_usuarios)
 
         self.statusBar().showMessage("Por favor, inicie sesión para continuar.")
 
@@ -106,6 +119,7 @@ class VentanaPrincipal(QMainWindow):
         self.accion_generar_grupo.triggered.connect(self.mostrar_vista_grupos)
         self.accion_consultar_alumnos_grupo.triggered.connect(self.mostrar_vista_consulta_grupos)
         self.accion_gestionar_horario.triggered.connect(self.mostrar_vista_horario)
+        self.accion_gestionar_usuarios.triggered.connect(self.mostrar_vista_gestion_usuarios)
         
         self.vista_login.login_exitoso.connect(self.desbloquear_aplicacion)
         
@@ -116,14 +130,17 @@ class VentanaPrincipal(QMainWindow):
         self.toolbar.setVisible(False)
         self.accion_ir_inicio.setEnabled(False)
 
-    @Slot()
-    def desbloquear_aplicacion(self):
+    @Slot(str)
+    def desbloquear_aplicacion(self, rol):
         self.menu_alumnos.setEnabled(True)
         self.menu_inscripciones.setEnabled(True)
-        self.menu_admin.setEnabled(True)
+        if rol == "admin":
+            self.menu_admin.setEnabled(True)
+        else:
+            self.menu_admin.setEnabled(False)
         self.toolbar.setVisible(True)
         self.accion_ir_inicio.setEnabled(True)
-        self.statusBar().showMessage("Sesión iniciada correctamente.")
+        self.statusBar().showMessage(f"Sesión iniciada. Rol: {rol}")
         self.mostrar_vista_inicio()
     
     @Slot()
@@ -157,6 +174,9 @@ class VentanaPrincipal(QMainWindow):
     def mostrar_vista_horario(self):
         self.vistas.setCurrentWidget(self.vista_horario)
         self.vista_horario.refrescar_grupos()
+    @Slot()
+    def mostrar_vista_gestion_usuarios(self):
+        self.vistas.setCurrentWidget(self.vista_gestion_usuarios)
 
     @Slot()
     def mostrar_acerca_de(self):
@@ -172,26 +192,18 @@ class VentanaPrincipal(QMainWindow):
 
 if __name__ == "__main__":
     database_manager.init_db()
+    database_manager.crear_admin_por_defecto()
     
     app = QApplication(sys.argv)
     
     try:
         script_dir = os.path.dirname(os.path.realpath(__file__))
         qss_file = os.path.join(script_dir, "estilos.qss")
-
         if os.path.exists(qss_file):
             with open(qss_file, "r", encoding="utf-8") as f:
-                stylesheet = f.read()
-                app.setStyleSheet(stylesheet)
-                print("Estilos QSS cargados correctamente.")
-        else:
-            error_msg = f"Error: No se encontró el archivo 'estilos.qss' en la ruta esperada:\n{qss_file}"
-            print(error_msg)
-            QMessageBox.warning(None, "Error de Carga", error_msg)
-
+                app.setStyleSheet(f.read())
     except Exception as e:
-        print(f"Ocurrió un error inesperado al cargar 'estilos.qss': {e}")
-        QMessageBox.critical(None, "Error Crítico", f"Ocurrió un error al cargar los estilos:\n{e}")
+        print(f"No se pudo cargar el archivo de estilos: {e}")
 
     ventana = VentanaPrincipal()
     ventana.show()

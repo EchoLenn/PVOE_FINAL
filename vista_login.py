@@ -1,8 +1,9 @@
 from PySide6.QtWidgets import *
 from PySide6.QtCore import *
+import database_manager
 
 class VistaLogin(QWidget):
-    login_exitoso = Signal()
+    login_exitoso = Signal(str)
 
     def __init__(self):
         super().__init__()
@@ -34,10 +35,13 @@ class VistaLogin(QWidget):
 
     @Slot()
     def verificar_login(self):
+        """Verifica las credenciales contra la base de datos."""
         usuario = self.entry_usuario.text()
         contrasena = self.entry_contrasena.text()
 
-        if usuario == "admin" and contrasena == "1234":
-            self.login_exitoso.emit()
+        rol = database_manager.verificar_usuario(usuario, contrasena)
+        
+        if rol:
+            self.login_exitoso.emit(rol)
         else:
             QMessageBox.warning(self, "Error de Acceso", "Usuario o contraseña incorrectos.")
