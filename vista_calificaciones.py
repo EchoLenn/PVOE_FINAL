@@ -1,37 +1,31 @@
 import os
 from PySide6.QtWidgets import *
 from PySide6.QtCore import *
+import database_manager
 
 class VistaCalificaciones(QWidget):
     def __init__(self):
         super().__init__()
-
         layout_busqueda = QHBoxLayout()
         label_id = QLabel("No. de Estudiante:")
         self.entry_id = QLineEdit()
         self.entry_id.setPlaceholderText("Ingrese ID y presione Buscar")
         self.boton_buscar = QPushButton("Buscar")
-        
         layout_busqueda.addWidget(label_id)
         layout_busqueda.addWidget(self.entry_id)
         layout_busqueda.addWidget(self.boton_buscar)
-
         self.tabla_calificaciones = QTableWidget()
         self.tabla_calificaciones.setColumnCount(2)
         self.tabla_calificaciones.setHorizontalHeaderLabels(["Materia", "Calificación"])
-        
         header = self.tabla_calificaciones.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-
         self.boton_guardar = QPushButton("Guardar Calificaciones")
         self.boton_guardar.setEnabled(False)
-
         layout_principal = QVBoxLayout(self)
         layout_principal.addLayout(layout_busqueda)
         layout_principal.addWidget(self.tabla_calificaciones)
         layout_principal.addWidget(self.boton_guardar)
-
         self.boton_buscar.clicked.connect(self.buscar_alumno)
         self.entry_id.returnPressed.connect(self.buscar_alumno)
         self.boton_guardar.clicked.connect(self.guardar_calificaciones)
@@ -53,54 +47,41 @@ class VistaCalificaciones(QWidget):
             QMessageBox.warning(self, "ID Vacío", "Por favor, ingrese un número de estudiante.")
             return
         
-        self.filename = f"{student_id}.txt"
-        self.current_student_id = student_id
-
-        if not os.path.exists(self.filename):
-            QMessageBox.critical(self, "Alumno No Encontrado", f"No se encontró un registro para el alumno con ID: {student_id}.\nVerifique el ID o registre al alumno primero.")
+        if not database_manager.verificar_alumno_existente(student_id):
+            QMessageBox.critical(self, "Alumno No Encontrado", f"No se encontró un registro para el alumno con ID: {student_id}.")
             self.tabla_calificaciones.setRowCount(0)
             self.boton_guardar.setEnabled(False)
             return
+
+        self.current_student_id = student_id
+        calificaciones = database_manager.obtener_calificaciones(student_id)
+
+        if not calificaciones:
+            self._cargar_materias_defecto()
+        else:
+            self.tabla_calificaciones.setRowCount(len(calificaciones))
+            for fila, (materia, calificacion) in enumerate(calificaciones):
+                item_materia = QTableWidgetItem(materia)
+                item_materia.setFlags(item_materia.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                calif_str = str(calificacion) if calificacion is not None else ""
+                item_calificacion = QTableWidgetItem(calif_str)
+                self.tabla_calificaciones.setItem(fila, 0, item_materia)
+                self.tabla_calificaciones.setItem(fila, 1, item_calificacion)
         
-        try:
-            with open(self.filename, 'r') as f:
-                lineas = [line.strip() for line in f.readlines() if line.strip()]
+        self.boton_guardar.setEnabled(True)
 
-            if not lineas:
-                self._cargar_materias_defecto()
-            else:
-                self.tabla_calificaciones.setRowCount(len(lineas))
-                for fila, linea in enumerate(lineas):
-                    if ',' in linea:
-                        materia, calificacion = linea.split(',', 1)
-                    else:
-                        materia, calificacion = linea, ""
-
-                    item_materia = QTableWidgetItem(materia)
-                    item_materia.setFlags(item_materia.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                    item_calificacion = QTableWidgetItem(calificacion)
-                    self.tabla_calificaciones.setItem(fila, 0, item_materia)
-                    self.tabla_calificaciones.setItem(fila, 1, item_calificacion)
-            
-            self.boton_guardar.setEnabled(True)
-
-        except Exception as e:
-            QMessageBox.critical(self, "Error al Cargar", f"No se pudo leer el archivo de calificaciones:\n{e}")
-            self.boton_guardar.setEnabled(False)
-    
     @Slot()
     def guardar_calificaciones(self):
-        try:
-            with open(self.filename, 'w') as f:
-                for fila in range(self.tabla_calificaciones.rowCount()):
-                    materia = self.tabla_calificaciones.item(fila, 0).text()
-                    calificacion = self.tabla_calificaciones.item(fila, 1).text()
-                    f.write(f"{materia},{calificacion}\n")
-            
+        lista_calificaciones = []
+        for fila in range(self.tabla_calificaciones.rowCount()):
+            materia = self.tabla_calificaciones.item(fila, 0).text()
+            calificacion = self.tabla_calificaciones.item(fila, 1).text()
+            lista_calificaciones.append((materia, calificacion))
+        
+        if database_manager.guardar_calificaciones(self.current_student_id, lista_calificaciones):
             QMessageBox.information(self, "Éxito", f"Calificaciones del alumno {self.current_student_id} guardadas.")
             self.entry_id.clear()
             self.tabla_calificaciones.setRowCount(0)
             self.boton_guardar.setEnabled(False)
-
-        except Exception as e:
-            QMessageBox.critical(self, "Error al Guardar", f"No se pudo guardar el archivo:\n{e}")
+        else:
+            QMessageBox.critical(self, "Error de Base de Datos", "No se pudieron guardar las calificaciones.")

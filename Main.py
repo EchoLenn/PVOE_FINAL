@@ -14,6 +14,8 @@ from vista_inscripcion import VistaInscripcion
 from vista_historial_inscripciones import VistaHistorialInscripciones
 from vista_grupos import VistaGrupos
 from vista_horario import VistaHorario
+from vista_consulta_grupos import VistaConsultaGrupos
+from vista_definir_horario import VistaDefinirHorario
 
 try:
     with open("estilos.qss", "x") as f:
@@ -42,6 +44,8 @@ class VentanaPrincipal(QMainWindow):
         self.accion_solicitar_inscripcion = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton), "Solicitar Inscripción", self)
         self.accion_historial_inscripciones = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserReload), "Consultar Historial", self)
         self.accion_generar_grupo = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder), "Generar Grupo", self)
+        self.accion_definir_horario = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView), "Definir Horario", self)
+        self.accion_consultar_alumnos_grupo = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DesktopIcon), "Consultar Alumnos por Grupo", self)
         self.accion_consultar_horario = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogListView), "Consultar Horario", self)
         accion_acerca_de = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_MessageBoxInformation), "Acerca de...", self)
 
@@ -54,6 +58,8 @@ class VentanaPrincipal(QMainWindow):
         self.menu_inscripciones.addAction(self.accion_solicitar_inscripcion)
         self.menu_inscripciones.addAction(self.accion_historial_inscripciones)
         self.menu_admin.addAction(self.accion_generar_grupo)
+        self.menu_admin.addAction(self.accion_definir_horario)
+        self.menu_admin.addAction(self.accion_consultar_alumnos_grupo)
         self.menu_admin.addAction(self.accion_consultar_horario)
         self.menu_ayuda.addAction(accion_acerca_de)
 
@@ -66,6 +72,8 @@ class VentanaPrincipal(QMainWindow):
         self.toolbar.addAction(self.accion_solicitar_inscripcion)
         self.toolbar.addAction(self.accion_historial_inscripciones)
         self.toolbar.addAction(self.accion_generar_grupo)
+        self.toolbar.addAction(self.accion_definir_horario)
+        self.toolbar.addAction(self.accion_consultar_alumnos_grupo)
         self.toolbar.addAction(self.accion_consultar_horario)
         self.toolbar.addSeparator()
         self.toolbar.addAction(accion_salir)
@@ -82,6 +90,8 @@ class VentanaPrincipal(QMainWindow):
         self.vista_historial_ins = VistaHistorialInscripciones()
         self.vista_grupos = VistaGrupos()
         self.vista_horario = VistaHorario()
+        self.vista_definir_horario = VistaDefinirHorario()
+        self.vista_consulta_grupos = VistaConsultaGrupos()
 
         self.vistas.addWidget(self.vista_login)
         self.vistas.addWidget(self.vista_inicio)
@@ -92,6 +102,8 @@ class VentanaPrincipal(QMainWindow):
         self.vistas.addWidget(self.vista_historial_ins)
         self.vistas.addWidget(self.vista_grupos)
         self.vistas.addWidget(self.vista_horario)
+        self.vistas.addWidget(self.vista_definir_horario)
+        self.vistas.addWidget(self.vista_consulta_grupos)
 
         self.statusBar().showMessage("Por favor, inicie sesión para continuar.")
 
@@ -104,6 +116,8 @@ class VentanaPrincipal(QMainWindow):
         self.accion_solicitar_inscripcion.triggered.connect(self.mostrar_vista_inscripcion)
         self.accion_historial_inscripciones.triggered.connect(self.mostrar_vista_historial)
         self.accion_generar_grupo.triggered.connect(self.mostrar_vista_grupos)
+        self.accion_definir_horario.triggered.connect(self.mostrar_vista_definir_horario)
+        self.accion_consultar_alumnos_grupo.triggered.connect(self.mostrar_vista_consulta_grupos)
         self.accion_consultar_horario.triggered.connect(self.mostrar_vista_horario)
         
         self.vista_login.login_exitoso.connect(self.desbloquear_aplicacion)
@@ -140,6 +154,7 @@ class VentanaPrincipal(QMainWindow):
     @Slot()
     def mostrar_vista_inscripcion(self):
         self.vistas.setCurrentWidget(self.vista_inscripcion)
+        self.vista_inscripcion.refrescar_grupos()
     @Slot()
     def mostrar_vista_historial(self):
         self.vistas.setCurrentWidget(self.vista_historial_ins)
@@ -147,6 +162,14 @@ class VentanaPrincipal(QMainWindow):
     @Slot()
     def mostrar_vista_grupos(self):
         self.vistas.setCurrentWidget(self.vista_grupos)
+    @Slot()
+    def mostrar_vista_definir_horario(self):
+        self.vistas.setCurrentWidget(self.vista_definir_horario)
+        self.vista_definir_horario.refrescar_grupos()
+    @Slot()
+    def mostrar_vista_consulta_grupos(self):
+        self.vistas.setCurrentWidget(self.vista_consulta_grupos)
+        self.vista_consulta_grupos.refrescar_grupos()
     @Slot()
     def mostrar_vista_horario(self):
         self.vistas.setCurrentWidget(self.vista_horario)
@@ -166,7 +189,6 @@ class VentanaPrincipal(QMainWindow):
 
 if __name__ == "__main__":
     database_manager.init_db()
-    
     app = QApplication(sys.argv)
     
     try:
@@ -174,7 +196,7 @@ if __name__ == "__main__":
         qss_file = os.path.join(script_dir, "estilos.qss")
 
         if os.path.exists(qss_file):
-            with open(qss_file, "r", encoding="utf-8") as f:
+            with open(qss_file, "r") as f:
                 stylesheet = f.read()
                 app.setStyleSheet(stylesheet)
                 print("Estilos QSS cargados correctamente.")

@@ -1,16 +1,13 @@
 /*
  * Hoja de Estilos QSS para el Proyecto UAMITOS HIGH SCHOOL
- * Inspirada en la paleta de colores institucionales: Rojo, Negro y Blanco.
 */
 
-/* --- Ventana Principal y Elementos Globales --- */
 QMainWindow, QWidget {
     background-color: #ffffff;
     font-family: Arial, sans-serif;
     color: #222222;
 }
 
-/* --- Barras de Menu y Herramientas --- */
 QMenuBar {
     background-color: #222222;
     color: #ffffff;
@@ -35,7 +32,6 @@ QToolBar {
     padding: 2px;
 }
 
-/* --- Botones --- */
 QPushButton {
     background-color: #c90023;
     color: white;
@@ -59,7 +55,6 @@ QPushButton:disabled {
     color: #e0e0e0;
 }
 
-/* --- Campos de Entrada de Texto --- */
 QLineEdit {
     border: 1px solid #cccccc;
     padding: 6px;
@@ -72,12 +67,10 @@ QLineEdit:focus {
     border: 2px solid #c90023;
 }
 
-/* --- Etiquetas y Titulos --- */
 QLabel {
     font-size: 13px;
 }
 
-/* --- Contenedores de Formularios --- */
 QGroupBox {
     font-size: 14px;
     font-weight: bold;
@@ -94,7 +87,6 @@ QGroupBox::title {
     background-color: #ffffff;
 }
 
-/* --- Tablas (Kardex, Calificaciones) --- */
 QTableWidget {
     border: 1px solid #cccccc;
     gridline-color: #e0e0e0;
@@ -110,31 +102,8 @@ QHeaderView::section {
     font-size: 13px;
 }
 
-/* --- Barra de Estado --- */
 QStatusBar {
     background-color: #f0f0f0;
     font-weight: bold;
 }
 
-/* --- Estilos para CheckBox (Género) --- */
-QCheckBox {
-    spacing: 5px;
-    font-size: 13px;
-}
-
-QCheckBox::indicator {
-    width: 15px;
-    height: 15px;
-    border: 2px solid #cccccc;
-    border-radius: 3px;
-}
-
-QCheckBox::indicator:unchecked {
-    background-color: #ffffff;
-}
-
-QCheckBox::indicator:checked {
-    background-color: #c90023;
-    border-color: #c90023;
-    image: url(iconos/check.svg);
-}
