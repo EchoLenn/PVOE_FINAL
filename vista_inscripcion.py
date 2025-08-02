@@ -2,6 +2,7 @@ from PySide6.QtWidgets import *
 from PySide6.QtCore import *
 import database_manager
 
+
 class VistaInscripcion(QWidget):
     def __init__(self):
         super().__init__()

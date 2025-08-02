@@ -3,6 +3,7 @@ from PySide6.QtWidgets import *
 from PySide6.QtCore import *
 import database_manager
 
+
 class VistaConsultaGrupos(QWidget):
     def __init__(self):
         super().__init__()
@@ -22,17 +23,14 @@ class VistaConsultaGrupos(QWidget):
         self.combo_grupos.currentTextChanged.connect(self.actualizar_alumnos)
 
     def refrescar_grupos(self):
-        """Obtiene los grupos de la DB y los pone en el ComboBox."""
         self.combo_grupos.clear()
         grupos = database_manager.obtener_grupos()
         self.combo_grupos.addItem("Seleccione un grupo", userData=None)
         for grupo_id, nombre in grupos:
             self.combo_grupos.addItem(nombre, userData=grupo_id)
-        self.combo_grupos.setCurrentIndex(0)
 
     @Slot()
     def actualizar_alumnos(self, _):
-        """Muestra en la tabla los alumnos inscritos en el grupo seleccionado."""
         self.tabla_alumnos.setRowCount(0)
         id_grupo = self.combo_grupos.currentData()
         if not id_grupo: return

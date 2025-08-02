@@ -127,11 +127,24 @@ def guardar_horario(id_grupo, datos_horario):
     cursor.executemany("INSERT INTO horarios (id_grupo, dia, hora, materia) VALUES (?, ?, ?, ?)", datos_horario)
     conn.commit()
     conn.close()
+    return True
 
 def obtener_horario(id_grupo):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute("SELECT dia, hora, materia FROM horarios WHERE id_grupo = ?", (id_grupo,))
+    cursor.execute("""
+        SELECT dia, hora, materia
+        FROM horarios
+        WHERE id_grupo = ?
+        ORDER BY
+            CASE dia
+                WHEN 'Lunes' THEN 1
+                WHEN 'Martes' THEN 2
+                WHEN 'Miércoles' THEN 3
+                WHEN 'Jueves' THEN 4
+                WHEN 'Viernes' THEN 5
+            END, hora
+    """, (id_grupo,))
     horario = cursor.fetchall()
     conn.close()
     return horario

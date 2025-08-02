@@ -3,6 +3,7 @@ from PySide6.QtWidgets import *
 from PySide6.QtCore import *
 import database_manager
 
+
 class VistaGrupos(QWidget):
     def __init__(self):
         super().__init__()
