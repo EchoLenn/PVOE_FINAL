@@ -51,6 +51,46 @@ def crear_usuario(username, password, rol):
     finally:
         conn.close()
 
+def obtener_usuarios():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, username, rol FROM usuarios")
+    usuarios = cursor.fetchall()
+    conn.close()
+    return usuarios
+
+def actualizar_usuario(id_usuario, username, password, rol):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    try:
+        if password:
+            password_hash = hashlib.sha256(password.encode()).hexdigest()
+            cursor.execute("UPDATE usuarios SET username = ?, password_hash = ?, rol = ? WHERE id = ?",
+                           (username, password_hash, rol, id_usuario))
+        else:
+            cursor.execute("UPDATE usuarios SET username = ?, rol = ? WHERE id = ?",
+                           (username, rol, id_usuario))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return "integridad"
+    finally:
+        conn.close()
+
+def eliminar_usuarios(ids_usuarios):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    try:
+        placeholders = ','.join('?' for _ in ids_usuarios)
+        cursor.execute(f"DELETE FROM usuarios WHERE id IN ({placeholders})", ids_usuarios)
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error al eliminar usuarios: {e}")
+        return False
+    finally:
+        conn.close()
+
 def registrar_alumno(datos_alumno, datos_tutor):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -80,14 +120,18 @@ def obtener_calificaciones(id_alumno):
 def guardar_calificaciones(id_alumno, lista_calificaciones):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM calificaciones WHERE id_alumno = ?", (id_alumno,))
-    for materia, calificacion in lista_calificaciones:
-        try: calif_float = float(calificacion) if calificacion and calificacion.strip() else None
-        except ValueError: calif_float = None
-        cursor.execute("INSERT INTO calificaciones (id_alumno, materia, calificacion) VALUES (?, ?, ?)", (id_alumno, materia, calif_float))
-    conn.commit()
-    conn.close()
-    return True
+    try:
+        cursor.execute("DELETE FROM calificaciones WHERE id_alumno = ?", (id_alumno,))
+        for materia, calificacion in lista_calificaciones:
+            cursor.execute("INSERT INTO calificaciones (id_alumno, materia, calificacion) VALUES (?, ?, ?)", 
+                          (id_alumno, materia, calificacion))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error al guardar calificaciones: {e}")
+        return False
+    finally:
+        conn.close()
 
 def agregar_grupo_con_materias(nombre, profesor, materias):
     conn = sqlite3.connect(DB_NAME)
@@ -114,6 +158,16 @@ def obtener_grupos():
     grupos = cursor.fetchall()
     conn.close()
     return grupos
+
+def obtener_materias_por_grupo(id_grupo):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT m.nombre FROM materias m JOIN grupo_materias gm ON m.id = gm.id_materia
+        WHERE gm.id_grupo = ? """, (id_grupo,))
+    materias = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    return materias
 
 def agregar_inscripcion(id_alumno, id_grupo, fecha, costo):
     conn = sqlite3.connect(DB_NAME)
@@ -144,16 +198,6 @@ def obtener_alumnos_por_grupo(id_grupo):
     conn.close()
     return alumnos
 
-def obtener_materias_por_grupo(id_grupo):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT m.nombre FROM materias m JOIN grupo_materias gm ON m.id = gm.id_materia
-        WHERE gm.id_grupo = ? """, (id_grupo,))
-    materias = [row[0] for row in cursor.fetchall()]
-    conn.close()
-    return materias
-
 def guardar_horario(id_grupo, datos_horario):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -174,3 +218,11 @@ def obtener_horario(id_grupo):
     horario = cursor.fetchall()
     conn.close()
     return horario
+
+def obtener_id_usuario_por_nombre(username):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM usuarios WHERE username = ?", (username,))
+    resultado = cursor.fetchone()
+    conn.close()
+    return resultado[0] if resultado else None

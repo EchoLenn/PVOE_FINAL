@@ -17,12 +17,6 @@ from vista_horario import VistaHorario
 from vista_consulta_grupos import VistaConsultaGrupos
 from vista_gestion_usuarios import VistaGestionUsuarios
 
-try:
-    with open("estilos.qss", "x") as f:
-        f.write("/* Archivo de Estilos QSS para UAMITOS High School */")
-except FileExistsError:
-    pass
-
 class VentanaPrincipal(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -38,6 +32,7 @@ class VentanaPrincipal(QMainWindow):
 
         self.accion_ir_inicio = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_ComputerIcon), "Ir a Inicio", self)
         accion_salir = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogCloseButton), "Salir", self)
+        self.accion_logout = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogCancelButton), "Cerrar Sesión", self)
         self.accion_registrar_alumno = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon), "Registrar Nuevo Alumno", self)
         self.accion_gestionar_calificaciones = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView), "Gestionar Calificaciones", self)
         self.accion_consultar_kardex = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogContentsView), "Consultar Kardex", self)
@@ -50,6 +45,7 @@ class VentanaPrincipal(QMainWindow):
         accion_acerca_de = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_MessageBoxInformation), "Acerca de...", self)
 
         self.menu_archivo.addAction(self.accion_ir_inicio)
+        self.menu_archivo.addAction(self.accion_logout)
         self.menu_archivo.addSeparator() 
         self.menu_archivo.addAction(accion_salir)
         self.menu_alumnos.addAction(self.accion_registrar_alumno)
@@ -76,6 +72,7 @@ class VentanaPrincipal(QMainWindow):
         self.toolbar.addAction(self.accion_consultar_alumnos_grupo)
         self.toolbar.addAction(self.accion_gestionar_horario)
         self.toolbar.addAction(self.accion_gestionar_usuarios)
+        self.toolbar.addAction(self.accion_logout)
         self.toolbar.addSeparator()
         self.toolbar.addAction(accion_salir)
 
@@ -120,6 +117,7 @@ class VentanaPrincipal(QMainWindow):
         self.accion_consultar_alumnos_grupo.triggered.connect(self.mostrar_vista_consulta_grupos)
         self.accion_gestionar_horario.triggered.connect(self.mostrar_vista_horario)
         self.accion_gestionar_usuarios.triggered.connect(self.mostrar_vista_gestion_usuarios)
+        self.accion_logout.triggered.connect(self.cerrar_sesion)
         
         self.vista_login.login_exitoso.connect(self.desbloquear_aplicacion)
         
@@ -130,8 +128,11 @@ class VentanaPrincipal(QMainWindow):
         self.toolbar.setVisible(False)
         self.accion_ir_inicio.setEnabled(False)
 
-    @Slot(str)
-    def desbloquear_aplicacion(self, rol):
+    @Slot(str, str)
+    def desbloquear_aplicacion(self, usuario, rol):
+        self.usuario_actual = usuario
+        self.rol_actual = rol
+        
         self.menu_alumnos.setEnabled(True)
         self.menu_inscripciones.setEnabled(True)
         if rol == "admin":
@@ -140,9 +141,36 @@ class VentanaPrincipal(QMainWindow):
             self.menu_admin.setEnabled(False)
         self.toolbar.setVisible(True)
         self.accion_ir_inicio.setEnabled(True)
-        self.statusBar().showMessage(f"Sesión iniciada. Rol: {rol}")
+        self.statusBar().showMessage(f"Sesión iniciada. Usuario: {usuario}, Rol: {rol}")
         self.mostrar_vista_inicio()
     
+    @Slot()
+    def cerrar_sesion(self):
+        self.menu_alumnos.setEnabled(False)
+        self.menu_inscripciones.setEnabled(False)
+        self.menu_admin.setEnabled(False)
+        self.toolbar.setVisible(False)
+        self.accion_ir_inicio.setEnabled(False)
+        self.statusBar().showMessage("Sesión cerrada. Por favor, inicie sesión para continuar.")
+        self.vistas.setCurrentWidget(self.vista_login)
+        
+        # Limpiar campos sensibles
+        if hasattr(self, 'vista_calificaciones'):
+            self.vista_calificaciones.entry_id.clear()
+            self.vista_calificaciones.tabla_calificaciones.setRowCount(0)
+            self.vista_calificaciones.boton_guardar.setEnabled(False)
+            if hasattr(self.vista_calificaciones, 'current_student_id'):
+                delattr(self.vista_calificaciones, 'current_student_id')
+        
+        if hasattr(self, 'vista_kardex'):
+            self.vista_kardex.entry_id.clear()
+            self.vista_kardex.tabla_kardex.setRowCount(0)
+            self.vista_kardex.label_promedio.setText("<h3>Promedio actual: N/A</h3>")
+        
+        if hasattr(self, 'vista_gestion_usuarios'):
+            self.vista_gestion_usuarios.preparar_nuevo_usuario()
+            self.vista_gestion_usuarios.cargar_usuarios()
+
     @Slot()
     def mostrar_vista_inicio(self):
         self.vistas.setCurrentWidget(self.vista_inicio)
@@ -176,6 +204,12 @@ class VentanaPrincipal(QMainWindow):
         self.vista_horario.refrescar_grupos()
     @Slot()
     def mostrar_vista_gestion_usuarios(self):
+        if hasattr(self, 'vista_gestion_usuarios'):
+            self.vistas.removeWidget(self.vista_gestion_usuarios)
+            self.vista_gestion_usuarios.deleteLater()
+            
+        self.vista_gestion_usuarios = VistaGestionUsuarios(self.usuario_actual, self.rol_actual)
+        self.vistas.addWidget(self.vista_gestion_usuarios)
         self.vistas.setCurrentWidget(self.vista_gestion_usuarios)
 
     @Slot()
@@ -193,7 +227,6 @@ class VentanaPrincipal(QMainWindow):
 if __name__ == "__main__":
     database_manager.init_db()
     database_manager.crear_admin_por_defecto()
-    
     app = QApplication(sys.argv)
     
     try:

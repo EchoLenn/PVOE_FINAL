@@ -1,7 +1,8 @@
+import re
 from PySide6.QtWidgets import *
 from PySide6.QtCore import *
+from PySide6.QtGui import *
 import database_manager
-
 
 class VistaRegistroAlumno(QWidget):
     def __init__(self):
@@ -26,8 +27,10 @@ class VistaRegistroAlumno(QWidget):
         self.apellido_pa = QLineEdit()
         self.apellido_ma = QLineEdit()
         self.direccion = QLineEdit()
-        self.fecha_nacimiento = QLineEdit()
-        self.fecha_nacimiento.setPlaceholderText("dd/mm/aaaa")
+        self.fecha_nacimiento = QDateEdit()
+        self.fecha_nacimiento.setCalendarPopup(True)
+        self.fecha_nacimiento.setDisplayFormat("dd/MM/yyyy")
+        self.fecha_nacimiento.setDate(QDate.currentDate().addYears(-10))
         self.genero_m = QRadioButton("Masculino")
         self.genero_f = QRadioButton("Femenino")
         self.grupo_genero = QButtonGroup(self)
@@ -66,29 +69,41 @@ class VistaRegistroAlumno(QWidget):
             self.grupo_genero.setExclusive(False)
             boton_chequeado.setChecked(False)
             self.grupo_genero.setExclusive(True)
+        self.fecha_nacimiento.setDate(QDate.currentDate().addYears(-10))
+
+    def validar_correo(self, correo):
+        patron = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+        return re.match(patron, correo) is not None
 
     @Slot()
     def registrar_datos(self):
         if not self.nombre_alum.text().strip() or not self.apellido_pa.text().strip():
             QMessageBox.warning(self, "Campos Incompletos", "El nombre y el apellido paterno son obligatorios.")
             return
+        
+        correo = self.correo.text().strip()
+        if correo and not self.validar_correo(correo):
+            QMessageBox.warning(self, "Correo Inválido", "El formato del correo electrónico no es válido. Debe ser: nombre@dominio.terminacion")
+            return
+            
         genero = "No especificado"
         if self.genero_m.isChecked():
             genero = "Masculino"
         elif self.genero_f.isChecked():
             genero = "Femenino"
+        
         datos_alumno = {
             "nombre": self.nombre_alum.text().strip(),
             "apellido_paterno": self.apellido_pa.text().strip(),
             "apellido_materno": self.apellido_ma.text().strip(),
             "direccion": self.direccion.text().strip(),
-            "fecha_nacimiento": self.fecha_nacimiento.text().strip(),
+            "fecha_nacimiento": self.fecha_nacimiento.date().toString("dd/MM/yyyy"),
             "genero": genero
         }
         datos_tutor = {
             "nombre_completo": self.nombre_pad.text().strip(),
             "telefono": self.telefono.text().strip(),
-            "correo": self.correo.text().strip()
+            "correo": correo
         }
         nuevo_id = database_manager.registrar_alumno(datos_alumno, datos_tutor)
         if nuevo_id:

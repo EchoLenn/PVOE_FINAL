@@ -1,8 +1,8 @@
 import os
 from PySide6.QtWidgets import *
 from PySide6.QtCore import *
+from PySide6.QtGui import Qt
 import database_manager
-
 
 class VistaCalificaciones(QWidget):
     def __init__(self):
@@ -73,16 +73,51 @@ class VistaCalificaciones(QWidget):
 
     @Slot()
     def guardar_calificaciones(self):
+        if not hasattr(self, 'current_student_id') or not self.current_student_id:
+            QMessageBox.warning(self, "Error", "No se ha seleccionado un alumno válido.")
+            return
+        
         lista_calificaciones = []
+        calificaciones_invalidas = []
+        
         for fila in range(self.tabla_calificaciones.rowCount()):
-            materia = self.tabla_calificaciones.item(fila, 0).text()
-            calificacion = self.tabla_calificaciones.item(fila, 1).text()
+            materia_item = self.tabla_calificaciones.item(fila, 0)
+            calificacion_item = self.tabla_calificaciones.item(fila, 1)
+            
+            if not materia_item or not calificacion_item:
+                continue
+                
+            materia = materia_item.text()
+            calificacion_texto = calificacion_item.text().strip()
+            
+            try:
+                if calificacion_texto:
+                    calificacion = float(calificacion_texto)
+                    if calificacion < 0 or calificacion > 10:
+                        calificaciones_invalidas.append(materia)
+                        continue
+                else:
+                    calificacion = None
+            except ValueError:
+                calificaciones_invalidas.append(materia)
+                continue
+                
             lista_calificaciones.append((materia, calificacion))
+        
+        if calificaciones_invalidas:
+            QMessageBox.warning(
+                self, 
+                "Calificaciones Inválidas", 
+                f"Las siguientes materias tienen calificaciones inválidas (deben ser entre 0 y 10):\n"
+                f"{', '.join(calificaciones_invalidas)}"
+            )
+            return
         
         if database_manager.guardar_calificaciones(self.current_student_id, lista_calificaciones):
             QMessageBox.information(self, "Éxito", f"Calificaciones del alumno {self.current_student_id} guardadas.")
             self.entry_id.clear()
             self.tabla_calificaciones.setRowCount(0)
             self.boton_guardar.setEnabled(False)
+            delattr(self, 'current_student_id')
         else:
             QMessageBox.critical(self, "Error de Base de Datos", "No se pudieron guardar las calificaciones.")
